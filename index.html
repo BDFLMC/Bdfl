@@ -1,0 +1,301 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Samim Mobile Centre - Advanced Billing System</title>
+    <style>
+        :root {
+            --primary: #0ea5e9;
+            --bg: #f0f9ff;
+            --text: #0f172a;
+            --border: #bae6fd;
+        }
+        * { box-sizing: border-box; font-family: 'Arial', sans-serif; }
+        body { margin: 0; padding: 20px; background-color: var(--bg); color: var(--text); }
+        
+        /* App Navigation */
+        .tabs { display: flex; gap: 10px; margin-bottom: 20px; background: white; padding: 10px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); flex-wrap: wrap; }
+        .tab-btn { padding: 10px 20px; border: none; background: #e0f2fe; cursor: pointer; border-radius: 5px; font-weight: bold; font-size: 14px; color: #0284c7; }
+        .tab-btn.active { background: var(--primary); color: white; }
+        
+        .section { display: none; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        .section.active { display: block; }
+        
+        /* Forms & Tables */
+        .form-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 15px; margin-bottom: 20px; }
+        .form-group { display: flex; flex-direction: column; position: relative; }
+        label { margin-bottom: 5px; font-weight: bold; font-size: 13px; color: #334155; }
+        input, select, textarea { padding: 8px; border: 1px solid var(--border); border-radius: 4px; font-size: 14px; }
+        .error-text { color: #ef4444; font-size: 11px; position: absolute; bottom: -15px; display: none; }
+        input:invalid + .error-text { display: block; }
+
+        button.action-btn { background: var(--primary); color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
+        button.action-btn.success { background: #16a34a; }
+        button.action-btn.warning { background: #f59e0b; }
+        button.action-btn.danger { background: #ef4444; }
+        
+        .search-bar { width: 100%; padding: 10px; margin-bottom: 15px; border-radius: 5px; border: 1px solid var(--border); font-size: 15px; }
+
+        .data-table { width: 100%; border-collapse: collapse; margin-top: 15px; font-size: 13px; }
+        .data-table th, .data-table td { border: 1px solid var(--border); padding: 8px; text-align: left; }
+        .data-table th { background: #f0f9ff; }
+
+        /* MIS Cards */
+        .mis-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .mis-card { background: #f0f9ff; padding: 20px; border-radius: 8px; border: 1px solid var(--border); text-align: center; }
+        .mis-card h3 { margin: 0 0 10px 0; font-size: 14px; color: #0369a1; }
+        .mis-card p { margin: 0; font-size: 24px; font-weight: bold; color: var(--primary); }
+
+        /* ================= INVOICE PRINT LAYOUT ================= */
+        .invoice-wrapper { max-width: 1000px; margin: auto; background: white; font-family: 'Arial', sans-serif; font-size: 12px; color: black; }
+        .invoice-box { border: 1px solid black; }
+        
+        .inv-header { text-align: center; border-bottom: 1px solid black; padding: 10px; }
+        .inv-header h1 { margin: 0; font-size: 24px; text-transform: uppercase; font-weight: 900; }
+        .inv-header p { margin: 4px 0; font-size: 12px; }
+        .inv-title { text-align: center; font-weight: bold; border-bottom: 1px solid black; padding: 5px; font-size: 14px; background: #f4f4f4; }
+        
+        .inv-details { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid black; }
+        .inv-left, .inv-right { padding: 10px; }
+        .inv-left { border-right: 1px solid black; }
+        .inv-left p, .inv-right p { margin: 4px 0; }
+        
+        .inv-table { width: 100%; border-collapse: collapse; }
+        .inv-table th, .inv-table td { border-bottom: 1px solid black; border-right: 1px solid black; padding: 5px; text-align: center; }
+        .inv-table th:last-child, .inv-table td:last-child { border-right: none; }
+        .inv-table th { background: #f4f4f4; font-weight: bold; }
+        
+        .inv-totals-grid { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 1px solid black; }
+        .imei-summary { border-right: 1px solid black; padding: 0; }
+        .imei-table { width: 100%; border-collapse: collapse; }
+        .imei-table th, .imei-table td { border-bottom: 1px solid black; border-right: 1px solid black; padding: 5px; text-align: center; font-size: 11px; }
+        .imei-table th { background: #f4f4f4; }
+        
+        .amount-summary { padding: 0; }
+        .amt-row { display: flex; justify-content: space-between; border-bottom: 1px solid black; padding: 5px 10px; }
+        .amt-row.grand { font-weight: bold; background: #f4f4f4; font-size: 14px; border-bottom: none; }
+        
+        .inv-footer { display: grid; grid-template-columns: 65% 35%; }
+        .bank-terms { padding: 10px; border-right: 1px solid black; display: flex; gap: 15px;}
+        .bank-details { flex-grow: 1; }
+        .qr-box { width: 90px; height: 90px; border: 1px dashed #999; display: flex; align-items: center; justify-content: center; font-size: 10px; color: #999; }
+        .qr-box img { max-width: 100%; max-height: 100%; }
+        .terms-list { font-size: 10px; padding-left: 15px; margin: 5px 0; }
+        .signature { padding: 10px; text-align: right; display: flex; flex-direction: column; justify-content: space-between; }
+        .auth-sign { margin-top: 40px; font-weight: bold; font-size: 11px; }
+
+        @media print {
+            body { background: white; padding: 0; }
+            .tabs, .no-print, .section:not(#invoice-section) { display: none !important; }
+            #invoice-section { padding: 0; box-shadow: none; margin: 0; display: block !important; }
+            input, select, textarea { border: none; background: transparent; appearance: none; -webkit-appearance: none; padding: 0; font-family: inherit; font-size: inherit; color: inherit; width: 100%; resize: none; }
+            input:focus, textarea:focus { outline: none; }
+            select::-ms-expand { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="tabs no-print">
+        <button class="tab-btn active" onclick="switchTab('invoice-section', this)">Invoice Generator</button>
+        <button class="tab-btn" onclick="switchTab('inventory-section', this)">Inventory</button>
+        <button class="tab-btn" onclick="switchTab('mis-section', this)">MIS Reports</button>
+        <button class="tab-btn" onclick="switchTab('customers-section', this)">Customers</button>
+        <button class="tab-btn" onclick="switchTab('setup-section', this)">Setup & Bank QR</button>
+        <button class="tab-btn" onclick="switchTab('bin-section', this)" style="background:#fecdd3; color:#e11d48;">Recycle Bin 🗑️</button>
+    </div>
+
+    <!-- 1. SETUP SECTION -->
+    <div id="setup-section" class="section">
+        <h2>Shop & Bank Details Setup</h2>
+        <div class="form-grid">
+            <div class="form-group"><label>Shop Name</label><input type="text" id="set-name" value="SAMIM MOBILE CENTRE"></div>
+            <div class="form-group"><label>Proprietor</label><input type="text" id="set-prop" value="Prop.-Samim Akhter"></div>
+            <div class="form-group"><label>Address Line 1</label><input type="text" id="set-addr1" value="Vill. P.O-Dahua (Near Bisram Ghar)"></div>
+            <div class="form-group"><label>Address Line 2</label><input type="text" id="set-addr2" value="H.C.Pur, Malda, Pin-732125"></div>
+            <div class="form-group"><label>Phone(s)</label><input type="text" id="set-phone" value="Mob.No-9734149621 / 7001397843"></div>
+            <div class="form-group"><label>GSTIN</label><input type="text" id="set-gstin" value="19BTIPA4451K1ZK"></div>
+            <div class="form-group"><label>Bank Name</label><input type="text" id="set-bank" value="SBI BANK"></div>
+            <div class="form-group"><label>Account Number</label><input type="text" id="set-acc" value="XXXXXXXXXXX"></div>
+            <div class="form-group"><label>IFSC Code</label><input type="text" id="set-ifsc" value="SBINXXXXXXX"></div>
+            <div class="form-group"><label>Upload UPI QR Code (Optional)</label><input type="file" id="set-qr" accept="image/*" onchange="encodeQR(this)"></div>
+        </div>
+        <img id="qr-preview" style="display:none; max-width: 100px; margin-bottom: 10px;" />
+        <button class="action-btn success" onclick="saveSettings()">Save Settings</button>
+    </div>
+
+    <!-- 2. INVENTORY SECTION -->
+    <div id="inventory-section" class="section">
+        <h2>Inventory Management</h2>
+        <div class="form-grid" style="background:#f0f9ff; padding:15px; border-radius:5px;">
+            <input type="hidden" id="inv-edit-id">
+            <div class="form-group"><label>IMEI Number</label><input type="text" id="inv-imei" placeholder="Scan or type IMEI"></div>
+            <div class="form-group"><label>Description / Model</label><input type="text" id="inv-desc" placeholder="e.g. Vivo V27"></div>
+            <div class="form-group"><label>Purchase Price (₹)</label><input type="number" id="inv-purchase" placeholder="0.00"></div>
+            <div class="form-group"><label>Selling Rate (₹) [Incl 18% GST]</label><input type="number" id="inv-selling" placeholder="0.00"></div>
+            <div class="form-group"><label>Initial Stock Qty</label><input type="number" id="inv-stock" value="1"></div>
+        </div>
+        <button class="action-btn" id="btn-add-inv" onclick="saveInventoryItem()">+ Add / Update Item</button>
+
+        <input type="text" class="search-bar" id="search-inv" placeholder="🔍 Search Inventory by Model or IMEI..." onkeyup="searchTable('search-inv', 'inventory-table')">
+        
+        <table class="data-table" id="inventory-table">
+            <thead><tr><th>IMEI</th><th>Description</th><th>Purchase</th><th>Selling (Incl)</th><th>Stock</th><th>Action</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- 3. MIS & REPORTS SECTION -->
+    <div id="mis-section" class="section">
+        <h2>Month-Wise MIS & Profit/Loss</h2>
+        <input type="month" id="mis-month" onchange="generateMIS()" style="margin-bottom:20px; padding:8px;">
+        
+        <div class="mis-cards">
+            <div class="mis-card"><h3>Total Sales</h3><p id="mis-sales">₹ 0.00</p></div>
+            <div class="mis-card"><h3>Total Cost (COGS)</h3><p id="mis-cost" style="color:#ef4444;">₹ 0.00</p></div>
+            <div class="mis-card profit"><h3>Gross Profit</h3><p id="mis-profit">₹ 0.00</p></div>
+        </div>
+
+        <input type="text" class="search-bar" id="search-mis" placeholder="🔍 Search Invoices by Name, Phone, or Bill No..." onkeyup="searchTable('search-mis', 'mis-table')">
+        <table class="data-table" id="mis-table">
+            <thead><tr><th>Date</th><th>Inv No</th><th>Customer</th><th>Phone</th><th>Pay Mode</th><th>Net Amount</th><th>Profit</th><th>Action</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- 4. CUSTOMER PROFILES SECTION -->
+    <div id="customers-section" class="section">
+        <h2>Customer Profiles & Database</h2>
+        <input type="text" class="search-bar" id="search-cust" placeholder="🔍 Search Customers by Name, Phone, PAN, or Aadhaar..." onkeyup="searchTable('search-cust', 'customers-table')">
+        <table class="data-table" id="customers-table">
+            <thead><tr><th>Cust ID</th><th>Name</th><th>Phone</th><th>Aadhaar</th><th>PAN</th><th>Address</th><th>Invoices</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+    
+    <!-- 5. RECYCLE BIN SECTION -->
+    <div id="bin-section" class="section">
+        <h2>Recycle Bin 🗑️</h2>
+        <p style="font-size:12px; color:gray;">Deleted Invoices and Inventory items go here. You can restore them or delete permanently.</p>
+        <table class="data-table" id="bin-table">
+            <thead><tr><th>Type</th><th>Details</th><th>Deleted On</th><th>Action</th></tr></thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <!-- 6. INVOICE SECTION -->
+    <div id="invoice-section" class="section active">
+        <div class="no-print" style="margin-bottom: 20px; display: flex; gap: 10px; align-items: flex-end; background: #f0f9ff; padding: 15px; border-radius: 8px;">
+            <div class="form-group" style="flex-grow: 1;">
+                <label>Select Product:</label>
+                <select id="product-dropdown"></select>
+            </div>
+            <button class="action-btn" onclick="addProductToInvoice()">+ Add to Bill</button>
+            <button class="action-btn success" onclick="saveAndPrintInvoice()" id="btn-save-print">💾 Save & 🖨️ Print</button>
+            <button class="action-btn warning" onclick="clearInvoice()" id="btn-clear-bill">Clear Bill</button>
+        </div>
+
+        <!-- PRINTABLE A4 AREA -->
+        <div class="invoice-wrapper">
+            <div class="invoice-box">
+                <div class="inv-header">
+                    <h1 id="lbl-shop-name">SAMIM MOBILE CENTRE</h1>
+                    <p id="lbl-shop-prop" style="font-weight: bold; font-size: 14px;">Prop.-Samim Akhter</p>
+                    <p id="lbl-shop-addr1">Vill. P.O-Dahua</p>
+                    <p id="lbl-shop-addr2">H.C.Pur, Malda</p>
+                    <p id="lbl-shop-contacts">Phone</p>
+                    <p><strong>GSTIN:</strong> <span id="lbl-shop-gst">19BTIPA4451K1ZK</span> | <strong>State:</strong> 19 West Bengal</p>
+                </div>
+                <div class="inv-title">TAX INVOICE <span style="float:right; font-weight:normal; font-size:11px;">ORIGINAL For Recipient</span></div>
+                
+                <div class="inv-details">
+                    <div class="inv-left">
+                        <p><strong>Buyer Name & Address</strong></p>
+                        <input type="text" id="bill-name" placeholder="Customer Name" style="font-weight:bold; margin-bottom:5px;">
+                        <textarea id="bill-address" placeholder="Customer Address..." rows="2" style="width:100%; border:none; margin-bottom:2px; font-family:inherit;"></textarea>
+                        <p><strong>Ph:</strong> <input type="text" id="bill-phone" placeholder="Phone Number" style="width:150px;"></p>
+                        
+                        <!-- Aadhaar and PAN fields -->
+                        <div class="form-group" style="display: inline-block;">
+                            <label style="font-size:11px; display:inline;"><strong>Aadhaar:</strong></label>
+                            <input type="text" id="bill-aadhaar" placeholder="12-digit Optional" pattern="\d{12}" style="width:130px; font-size:11px;">
+                            <span class="error-text">Must be exactly 12 digits</span>
+                        </div>
+                        <div class="form-group" style="display: inline-block; margin-left: 10px;">
+                            <label style="font-size:11px; display:inline;"><strong>PAN:</strong></label>
+                            <input type="text" id="bill-pan" placeholder="ABCDE1234F Optional" pattern="[A-Za-z]{5}[0-9]{4}[A-Za-z]{1}" style="width:130px; font-size:11px; text-transform:uppercase;">
+                            <span class="error-text">Invalid PAN Format</span>
+                        </div>
+                    </div>
+                    <div class="inv-right">
+                        <table style="width:100%; border:none; font-size:12px;">
+                            <tr><td><strong>Invoice No</strong></td><td>: <input type="text" id="bill-inv-no" value="1001"></td></tr>
+                            <tr><td><strong>Invoice Dt</strong></td><td>: <input type="date" id="bill-inv-date"></td></tr>
+                            <tr><td><strong>Pay Mode</strong></td><td>: 
+                                <select id="bill-paymode" class="no-print" style="width: 120px;">
+                                    <option value="CASH">CASH</option>
+                                    <option value="FINANCE-TVS">FINANCE (TVS)</option>
+                                    <option value="FINANCE-BAJAJ">FINANCE (BAJAJ)</option>
+                                    <option value="FINANCE-HDB">FINANCE (HDB)</option>
+                                    <option value="CREDIT-CARD">CREDIT CARD</option>
+                                    <option value="FINANCE-DMI">FINANCE (DMI)</option>
+                                    <option value="FINANCE-CHOLA">FINANCE (CHOLA)</option>
+                                </select>
+                                <span class="print-only" id="print-paymode" style="display:none; font-weight:bold;">CASH</span>
+                            </td></tr>
+                        </table>
+                    </div>
+                </div>
+
+                <table class="inv-table">
+                    <thead>
+                        <tr>
+                            <th style="width:5%;">Sr No</th>
+                            <th style="width:15%;">IMEI Number</th>
+                            <th style="width:35%; text-align:left;">Product Description</th>
+                            <th style="width:7%;">Qty</th>
+                            <th style="width:10%;">Rate<br>(Incl. Tax)</th>
+                            <th style="width:5%;">Disc%</th>
+                            <th style="width:5%;">SGST</th>
+                            <th style="width:5%;">CGST</th>
+                            <th style="width:12%;">Amount</th>
+                            <th class="no-print" style="width:5%;">X</th>
+                        </tr>
+                    </thead>
+                    <tbody id="invoice-tbody"></tbody>
+                </table>
+
+                <div class="inv-totals-grid">
+                    <div class="imei-summary">
+                        <table class="imei-table">
+                            <thead><tr><th>IMEI</th><th>Taxable Val</th><th>SGST Amt</th><th>CGST Amt</th></tr></thead>
+                            <tbody id="imei-tbody"></tbody>
+                        </table>
+                    </div>
+                    <div class="amount-summary">
+                        <div class="amt-row"><span>Total Taxable Value:</span><span id="sum-taxable">0.00</span></div>
+                        <div class="amt-row"><span>CGST @ 9.00 %:</span><span id="sum-cgst">0.00</span></div>
+                        <div class="amt-row"><span>SGST @ 9.00 %:</span><span id="sum-sgst">0.00</span></div>
+                        <div class="amt-row grand"><span>NET AMOUNT:</span><span id="sum-net">0.00</span></div>
+                    </div>
+                </div>
+
+                <div class="inv-footer">
+                    <div class="bank-terms">
+                        <div class="bank-details">
+                            <strong id="lbl-bank-details">SBI BANK, A/C NO: XXXX<br>IFS CODE: XXXX, BRANCH: MALDA</strong><br><br>
+                            <div style="font-weight:bold; font-size:11px;">[In Words]: <span id="amt-in-words" style="font-weight:normal;"></span></div>
+                            <ol class="terms-list">
+                                <li>Goods once sold will not be accepted back.</li>
+                                <li>Physical damage is not covered under warranty.</li>
+                                <li>Subject to Malda Jurisdiction.</li>
+                            </ol>
+                        </div>
+                        <div class="qr-box" id="print-qr-box">
+                            No QR Uploaded
+                        </div>
+                    </div>
+                    <div class="signature">
+                        <div style="font-size:10px;">E. & O. E.</div>
+               
